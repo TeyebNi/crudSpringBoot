@@ -30,20 +30,40 @@ public class EmployeeController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Employee> getEmployeeById(@PathVariable Long id) {
+    public ResponseEntity<?> getEmployeeById(@PathVariable Long id) {
         Optional<Employee> employee = employeeService.getEmployeeById(id);
-        return employee.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
+
+        if (employee.isPresent()) {
+            return ResponseEntity.ok(employee.get());
+        } else {
+            return ResponseEntity.status(404).body("ID " + id + " does not exist.");
+        }
     }
+
 
     @PutMapping("/{id}")
-    public ResponseEntity<Employee> updateEmployee(@PathVariable Long id, @RequestBody Employee employee) {
-        Employee updatedEmployee = employeeService.updateEmployee(id, employee);
-        return updatedEmployee != null ? ResponseEntity.ok(updatedEmployee) : ResponseEntity.notFound().build();
+    public ResponseEntity<?> updateEmployee(@PathVariable Long id, @RequestBody Employee employee) {
+        Optional<Employee> existingEmployee = employeeService.getEmployeeById(id);
+
+        if (existingEmployee.isPresent()) {
+            Employee updatedEmployee = employeeService.updateEmployee(id, employee);
+            return ResponseEntity.ok(updatedEmployee);
+        } else {
+            return ResponseEntity.status(404).body("ID " + id + " does not exist.");
+        }
     }
 
+
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteEmployee(@PathVariable Long id) {
-        employeeService.deleteEmployee(id);
-        return ResponseEntity.noContent().build();
+    public ResponseEntity<?> deleteEmployee(@PathVariable Long id) {
+        Optional<Employee> existingEmployee = employeeService.getEmployeeById(id);
+
+        if (existingEmployee.isPresent()) {
+            employeeService.deleteEmployee(id);
+            return ResponseEntity.ok("Employee with ID " + id + " was deleted successfully.");
+        } else {
+            return ResponseEntity.status(404).body("ID " + id + " does not exist.");
+        }
     }
+
 }
